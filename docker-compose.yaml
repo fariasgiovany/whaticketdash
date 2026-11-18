@@ -20,6 +20,7 @@ services:
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - PROXY_PORT=${PROXY_PORT:-8080}
       - CHROME_ARGS=--no-sandbox --disable-setuid-sandbox
+      - CHROME_BIN=/usr/bin/google-chrome-stable
     ports:
       - ${BACKEND_PORT:-8080}:3000
     volumes:
@@ -51,7 +52,7 @@ services:
     image: ${MYSQL_ENGINE:-mariadb}:${MYSQL_VERSION:-10.6}
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_bin    
     volumes:
-      - ./.docker/data/:/var/lib/mysql
+      - ./${MYSQL_DATA_DIR:-.docker/data}/:/var/lib/mysql
     environment:
       - MYSQL_DATABASE=${MYSQL_DATABASE:-whaticket}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-strongpassword}
