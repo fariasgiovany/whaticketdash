@@ -451,6 +451,7 @@ const init = async (whatsapp: Whatsapp): Promise<void> => {
 
     const wbot: Session = new Client({
       authStrategy: new LocalAuth({ clientId: `bd_${whatsapp.id}` }),
+      authTimeoutMs: 90000,
       puppeteer: {
         // headless: false, // TODO make sure chromium closes on session disconnection / delete
         executablePath: process.env.CHROME_BIN || undefined,
@@ -616,6 +617,11 @@ const init = async (whatsapp: Whatsapp): Promise<void> => {
     await wbot.initialize();
   } catch (err) {
     logger.error(err, "Error on whatsapp session");
+    await whatsapp.update({ status: "DISCONNECTED", qrcode: "" });
+    getIO().emit("whatsappSession", {
+      action: "update",
+      session: whatsapp
+    });
   }
 };
 

@@ -167,7 +167,7 @@ const TicketListItem = ({ ticket }) => {
 				dense
 				button
 				onClick={e => {
-					if (ticket.status === "pending") return;
+					if (ticket.status === "pending" || ticket.status === "ignored") return;
 					handleSelectTicket(ticket.id);
 				}}
 				selected={ticketId && +ticketId === ticket.id}
@@ -253,7 +253,7 @@ const TicketListItem = ({ ticket }) => {
 						</span>
 					}
 				/>
-				{ticket.status === "pending" && (
+				{(ticket.status === "pending" || ticket.status === "ignored") && (
 					<ButtonWithSpinner
 						color="primary"
 						variant="contained"
@@ -262,7 +262,7 @@ const TicketListItem = ({ ticket }) => {
 						loading={loading}
 						onClick={e => handleAcepptTicket(ticket.id)}
 					>
-						{i18n.t("ticketsList.buttons.accept")}
+						{i18n.t(ticket.status === "ignored" ? "ticketsList.buttons.attend" : "ticketsList.buttons.accept")}
 					</ButtonWithSpinner>
 				)}
 			</ListItem>

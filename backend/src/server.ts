@@ -3,6 +3,7 @@ import app from "./app";
 import { initIO } from "./libs/socket";
 import { logger } from "./utils/logger";
 import { StartAllWhatsAppsSessions } from "./services/WbotServices/StartAllWhatsAppsSessions";
+import cleanupCompletedCards from "./services/CardServices/CleanupCompletedCards";
 
 const server = app.listen(process.env.PORT, () => {
   logger.info(`Server started on port: ${process.env.PORT}`);
@@ -10,6 +11,8 @@ const server = app.listen(process.env.PORT, () => {
 
 initIO(server);
 StartAllWhatsAppsSessions();
+void cleanupCompletedCards();
+setInterval(() => { void cleanupCompletedCards(); }, 24 * 60 * 60 * 1000).unref();
 gracefulShutdown(server);
 
 process.on("uncaughtException", err => {

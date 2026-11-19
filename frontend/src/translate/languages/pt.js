@@ -238,6 +238,7 @@ const messages = {
         tabs: {
           open: { title: "Inbox" },
           closed: { title: "Resolvidos" },
+          ignored: { title: "Ignorados" },
           search: { title: "Busca" },
         },
         search: {
@@ -269,6 +270,7 @@ const messages = {
         connectionTitle: "Conexão que está sendo utilizada atualmente.",
         buttons: {
           accept: "Aceitar",
+          attend: "Atender",
         },
       },
       newTicketModal: {
@@ -385,6 +387,8 @@ const messages = {
             resolve: "Resolver",
             reopen: "Reabrir",
             accept: "Aceitar",
+            ignore: "Ignorar",
+            attend: "Atender",
           },
         },
       },

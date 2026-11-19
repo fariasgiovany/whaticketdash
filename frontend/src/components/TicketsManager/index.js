@@ -12,6 +12,7 @@ import Tooltip from "@material-ui/core/Tooltip";
 import AddIcon from "@material-ui/icons/Add";
 import MoveToInboxIcon from "@material-ui/icons/MoveToInbox";
 import CheckBoxIcon from "@material-ui/icons/CheckBox";
+import BlockIcon from "@material-ui/icons/Block";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Switch from "@material-ui/core/Switch";
 import NewTicketModal from "../NewTicketModal";
@@ -249,6 +250,12 @@ const TicketsManager = () => {
             classes={tabClasses}
           />
           <Tab
+            value={"ignored"}
+            icon={<BlockIcon fontSize="small" />}
+            label={i18n.t("tickets.tabs.ignored.title")}
+            classes={tabClasses}
+          />
+          <Tab
             value={"search"}
             icon={<SearchIcon fontSize="small" />}
             label={i18n.t("tickets.tabs.search.title")}
@@ -356,6 +363,13 @@ const TicketsManager = () => {
       <TabPanel value={tab} name="closed" className={classes.ticketsWrapper}>
         <TicketsList
           status="closed"
+          showAll={true}
+          selectedQueueIds={selectedQueueIds}
+        />
+      </TabPanel>
+      <TabPanel value={tab} name="ignored" className={classes.ticketsWrapper}>
+        <TicketsList
+          status="ignored"
           showAll={true}
           selectedQueueIds={selectedQueueIds}
         />

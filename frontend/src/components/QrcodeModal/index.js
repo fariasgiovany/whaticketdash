@@ -11,37 +11,39 @@ const QrcodeModal = ({ open, onClose, whatsAppId }) => {
 	const [qrCode, setQrCode] = useState("");
 
 	useEffect(() => {
+		if (!open || !whatsAppId) return;
+		let active = true;
 		const fetchSession = async () => {
-			if (!whatsAppId) return;
-
 			try {
 				const { data } = await api.get(`/whatsapp/${whatsAppId}`);
-				setQrCode(data.qrcode);
+				if (active) {
+					setQrCode(data.qrcode || "");
+					if (data.status === "CONNECTED") onClose();
+				}
 			} catch (err) {
-				toastError(err);
+				if (active) toastError(err);
 			}
 		};
 		void fetchSession();
-	}, [whatsAppId]);
+		const interval = setInterval(fetchSession, 3000);
+		return () => { active = false; clearInterval(interval); };
+	}, [open, whatsAppId, onClose]);
 
 	useEffect(() => {
-		if (!whatsAppId) return;
+		if (!open || !whatsAppId) return;
 		const socket = openSocket();
 
 		socket.on("whatsappSession", data => {
-			if (data.action === "update" && data.session.id === whatsAppId) {
-				setQrCode(data.session.qrcode);
-			}
-
-			if (data.action === "update" && data.session.qrcode === "") {
-				onClose();
+			if (data.action === "update" && Number(data.session.id) === Number(whatsAppId)) {
+				setQrCode(data.session.qrcode || "");
+				if (data.session.status === "CONNECTED") onClose();
 			}
 		});
 
 		return () => {
 			socket.disconnect();
 		};
-	}, [whatsAppId, onClose]);
+	}, [open, whatsAppId, onClose]);
 
 	return (
 		<Dialog open={open} onClose={onClose} maxWidth="lg" scroll="paper">

@@ -3,7 +3,7 @@ import { useHistory } from "react-router-dom";
 
 import { makeStyles } from "@material-ui/core/styles";
 import { IconButton } from "@material-ui/core";
-import { MoreVert, Replay } from "@material-ui/icons";
+import { Block, MoreVert, Replay } from "@material-ui/icons";
 
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
@@ -62,19 +62,27 @@ const TicketActionButtons = ({ ticket }) => {
 
 	return (
 		<div className={classes.actionButtons}>
-			{ticket.status === "closed" && (
+          {(ticket.status === "closed" || ticket.status === "ignored") && (
 				<ButtonWithSpinner
 					loading={loading}
 					startIcon={<Replay />}
 					size="small"
 					onClick={e => handleUpdateTicketStatus(e, "open", user?.id)}
 				>
-					{i18n.t("messagesList.header.buttons.reopen")}
+                    {i18n.t(ticket.status === "ignored" ? "messagesList.header.buttons.attend" : "messagesList.header.buttons.reopen")}
 				</ButtonWithSpinner>
 			)}
 			{ticket.status === "open" && (
 				<>
 					<ButtonWithSpinner
+                        loading={loading}
+                        startIcon={<Block />}
+                        size="small"
+                        onClick={e => handleUpdateTicketStatus(e, "ignored", null)}
+                    >
+                        {i18n.t("messagesList.header.buttons.ignore")}
+                    </ButtonWithSpinner>
+                    <ButtonWithSpinner
 						loading={loading}
 						startIcon={<Replay />}
 						size="small"
@@ -103,7 +111,8 @@ const TicketActionButtons = ({ ticket }) => {
 				</>
 			)}
 			{ticket.status === "pending" && (
-				<ButtonWithSpinner
+                <>
+                <ButtonWithSpinner
 					loading={loading}
 					size="small"
 					variant="contained"
@@ -112,6 +121,15 @@ const TicketActionButtons = ({ ticket }) => {
 				>
 					{i18n.t("messagesList.header.buttons.accept")}
 				</ButtonWithSpinner>
+                <ButtonWithSpinner
+                    loading={loading}
+                    startIcon={<Block />}
+                    size="small"
+                    onClick={e => handleUpdateTicketStatus(e, "ignored", null)}
+                >
+                    {i18n.t("messagesList.header.buttons.ignore")}
+                </ButtonWithSpinner>
+                </>
 			)}
 		</div>
 	);

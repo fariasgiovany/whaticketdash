@@ -8,7 +8,7 @@ import createAppTheme from "../../theme";
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
 
   const toggleTheme = () => {
     setDarkMode((prevMode) => !prevMode);

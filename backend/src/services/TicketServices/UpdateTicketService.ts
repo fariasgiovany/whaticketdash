@@ -2,6 +2,7 @@ import CheckContactOpenTickets from "../../helpers/CheckContactOpenTickets";
 import SetTicketMessagesAsRead from "../../helpers/SetTicketMessagesAsRead";
 import { getIO } from "../../libs/socket";
 import Ticket from "../../models/Ticket";
+import Card from "../../models/Card";
 import SendWhatsAppMessage from "../WbotServices/SendWhatsAppMessage";
 import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
 import ShowTicketService from "./ShowTicketService";
@@ -57,6 +58,26 @@ const UpdateTicketService = async ({
   }
 
   await ticket.reload();
+
+  if (ticket.status === "open" && oldStatus !== "open") {
+    const [card] = await Card.findOrCreate({
+      where: { ticketId: ticket.id },
+      defaults: {
+        ticketId: ticket.id,
+        title: ticket.contact.name,
+        position: Math.floor(Date.now() / 1000),
+        completed: false
+      }
+    });
+    if (card.completed) {
+      await card.update({ completed: false, completedAt: null });
+    }
+  } else if (ticket.status === "closed" && oldStatus !== "closed") {
+    await Card.update(
+      { completed: true, completedAt: new Date() },
+      { where: { ticketId: ticket.id } }
+    );
+  }
 
   const io = getIO();
 

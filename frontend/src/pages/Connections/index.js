@@ -114,6 +114,8 @@ const Connections = () => {
 	const handleStartWhatsAppSession = async whatsAppId => {
 		try {
 			await api.post(`/whatsappsession/${whatsAppId}`);
+			const whatsApp = whatsApps.find(item => item.id === whatsAppId);
+			if (whatsApp) handleOpenQrModal(whatsApp);
 		} catch (err) {
 			toastError(err);
 		}
@@ -122,6 +124,8 @@ const Connections = () => {
 	const handleRequestNewQrCode = async whatsAppId => {
 		try {
 			await api.put(`/whatsappsession/${whatsAppId}`);
+			const whatsApp = whatsApps.find(item => item.id === whatsAppId);
+			if (whatsApp) handleOpenQrModal(whatsApp);
 		} catch (err) {
 			toastError(err);
 		}
@@ -242,7 +246,7 @@ const Connections = () => {
 					</Button>
 				)}
 				{whatsApp.status === "OPENING" && (
-					<Button size="small" variant="outlined" disabled color="default">
+					<Button size="small" variant="outlined" color="default" onClick={() => handleOpenQrModal(whatsApp)}>
 						{i18n.t("connections.buttons.connecting")}
 					</Button>
 				)}

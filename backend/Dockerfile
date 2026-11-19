@@ -37,4 +37,5 @@ EXPOSE 3000
 ENTRYPOINT ["dumb-init", "--"]
 CMD dockerize -wait tcp://${DB_HOST}:3306 \
   && npx sequelize db:migrate \
+  && find /usr/src/app/.wwebjs_auth -maxdepth 2 -name 'Singleton*' -delete \
   && node dist/server.js

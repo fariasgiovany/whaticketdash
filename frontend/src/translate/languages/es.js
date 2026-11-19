@@ -239,6 +239,7 @@ const messages = {
         tabs: {
           open: { title: "Bandeja" },
           closed: { title: "Resueltos" },
+          ignored: { title: "Ignorados" },
           search: { title: "Buscar" },
         },
         search: {
@@ -270,6 +271,7 @@ const messages = {
           "No se encontraron tickets con este estado o término de búsqueda",
         buttons: {
           accept: "Acceptar",
+          attend: "Atender",
         },
       },
       newTicketModal: {
@@ -386,6 +388,8 @@ const messages = {
             resolve: "Resolver",
             reopen: "Reabrir",
             accept: "Aceptar",
+            ignore: "Ignorar",
+            attend: "Atender",
           },
         },
       },
