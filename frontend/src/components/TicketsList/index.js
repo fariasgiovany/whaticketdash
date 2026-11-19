@@ -151,7 +151,7 @@ const reducer = (state, action) => {
 };
 
 	const TicketsList = (props) => {
-		const { status, searchParam, showAll, selectedQueueIds, updateCount, style } =
+		const { status, searchParam, date, closedDate, withUnreadMessages, showAll, selectedQueueIds, updateCount, style } =
 			props;
 	const classes = useStyles();
 	const [pageNumber, setPageNumber] = useState(1);
@@ -161,18 +161,21 @@ const reducer = (state, action) => {
 	useEffect(() => {
 		dispatch({ type: "RESET" });
 		setPageNumber(1);
-	}, [status, searchParam, dispatch, showAll, selectedQueueIds]);
+	}, [status, searchParam, date, closedDate, withUnreadMessages, dispatch, showAll, selectedQueueIds]);
 
 	const { tickets, hasMore, loading } = useTickets({
 		pageNumber,
 		searchParam,
+		date,
+		closedDate,
+		withUnreadMessages,
 		status,
 		showAll,
 		queueIds: JSON.stringify(selectedQueueIds),
 	});
 
 	useEffect(() => {
-		if (!status && !searchParam) return;
+		if (!status && !searchParam && !date && !closedDate && !withUnreadMessages) return;
 		dispatch({
 			type: "LOAD_TICKETS",
 			payload: tickets,

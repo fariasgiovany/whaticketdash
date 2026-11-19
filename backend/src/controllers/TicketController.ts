@@ -15,6 +15,8 @@ type IndexQuery = {
   pageNumber: string;
   status: string;
   date: string;
+  closedDate: string;
+  offset: string;
   showAll: string;
   withUnreadMessages: string;
   queueIds: string;
@@ -32,6 +34,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     pageNumber,
     status,
     date,
+    closedDate,
+    offset,
     searchParam,
     showAll,
     queueIds: queueIdsStringified,
@@ -51,6 +55,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     pageNumber,
     status,
     date,
+    closedDate,
+    offset,
     showAll,
     userId,
     queueIds,

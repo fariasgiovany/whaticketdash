@@ -1,5 +1,4 @@
 import { Op, fn, where, col, Filterable, Includeable } from "sequelize";
-import { startOfDay, endOfDay, parseISO } from "date-fns";
 
 import Ticket from "../../models/Ticket";
 import Contact from "../../models/Contact";
@@ -13,6 +12,8 @@ interface Request {
   pageNumber?: string;
   status?: string;
   date?: string;
+  closedDate?: string;
+  offset?: string;
   showAll?: string;
   userId: string;
   withUnreadMessages?: string;
@@ -31,6 +32,8 @@ const ListTicketsService = async ({
   queueIds,
   status,
   date,
+  closedDate,
+  offset: timezoneOffset,
   showAll,
   userId,
   withUnreadMessages
@@ -113,23 +116,34 @@ const ListTicketsService = async ({
     };
   }
 
-  if (date) {
+  const day = closedDate || date;
+  if (day && /^\d{4}-\d{2}-\d{2}$/.test(day)) {
+    const minutes = Math.max(-840, Math.min(840, Number(timezoneOffset) || 0));
+    const start = new Date(new Date(`${day}T00:00:00.000Z`).getTime() + minutes * 60000);
+    const end = new Date(start.getTime() + 86400000);
     whereCondition = {
-      createdAt: {
-        [Op.between]: [+startOfDay(parseISO(date)), +endOfDay(parseISO(date))]
+      ...whereCondition,
+      [closedDate ? "closedAt" : "createdAt"]: {
+        [Op.gte]: start,
+        [Op.lt]: end
       }
     };
   }
 
   if (withUnreadMessages === "true") {
-    const user = await ShowUserService(userId);
-    const userQueueIds = user.queues.map(queue => queue.id);
-
     whereCondition = {
-      [Op.or]: [{ userId }, { status: "pending" }],
-      queueId: { [Op.or]: [userQueueIds, null] },
+      ...whereCondition,
       unreadMessages: { [Op.gt]: 0 }
     };
+    if (showAll !== "true") {
+      const user = await ShowUserService(userId);
+      const userQueueIds = user.queues.map(queue => queue.id);
+      whereCondition = {
+        ...whereCondition,
+        [Op.or]: [{ userId }, { status: "pending" }],
+        queueId: { [Op.or]: [userQueueIds, null] }
+      };
+    }
   }
 
   const limit = 40;
