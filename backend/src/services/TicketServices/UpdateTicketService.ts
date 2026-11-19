@@ -1,10 +1,10 @@
+import sequelize from "../../database";
+import AppError from "../../errors/AppError";
 import CheckContactOpenTickets from "../../helpers/CheckContactOpenTickets";
 import SetTicketMessagesAsRead from "../../helpers/SetTicketMessagesAsRead";
 import { getIO } from "../../libs/socket";
 import Ticket from "../../models/Ticket";
 import Card from "../../models/Card";
-import SendWhatsAppMessage from "../WbotServices/SendWhatsAppMessage";
-import ShowWhatsAppService from "../WhatsappService/ShowWhatsAppService";
 import ShowTicketService from "./ShowTicketService";
 
 interface TicketData {
@@ -34,55 +34,65 @@ const UpdateTicketService = async ({
   const ticket = await ShowTicketService(ticketId);
   await SetTicketMessagesAsRead(ticket);
 
-  if (whatsappId && ticket.whatsappId !== whatsappId) {
-    await CheckContactOpenTickets(ticket.contactId, whatsappId);
-  }
-
-  const oldStatus = ticket.status;
-  const oldUserId = ticket.user?.id;
-
-  if (oldStatus === "closed") {
-    await CheckContactOpenTickets(ticket.contact.id, ticket.whatsappId);
-  }
-
-  await ticket.update({
-    status,
-    queueId,
-    userId,
-    ...(status === "closed" && oldStatus !== "closed"
-      ? { closedAt: new Date() }
-      : status && status !== "closed"
-      ? { closedAt: null }
-      : {})
-  });
-
-  if (whatsappId) {
-    await ticket.update({
-      whatsappId
+  const { oldStatus, oldUserId } = await sequelize.transaction(async transaction => {
+    const current = await Ticket.findByPk(ticket.id, {
+      transaction,
+      lock: transaction.LOCK.UPDATE
     });
-  }
+    if (!current) throw new AppError("ERR_NO_TICKET_FOUND", 404);
 
-  await ticket.reload();
+    const oldStatus = current.status;
+    const oldUserId = current.userId ?? undefined;
 
-  if (ticket.status === "open" && oldStatus !== "open") {
-    const [card] = await Card.findOrCreate({
-      where: { ticketId: ticket.id },
-      defaults: {
-        ticketId: ticket.id,
-        title: ticket.contact.name,
-        position: Math.floor(Date.now() / 1000),
-        completed: false
-      }
-    });
-    if (card.completed) {
-      await card.update({ completed: false, completedAt: null });
+    if (whatsappId && current.whatsappId !== whatsappId) {
+      await CheckContactOpenTickets(current.contactId, whatsappId, transaction);
     }
-  } else if (ticket.status === "closed" && oldStatus !== "closed") {
-    await Card.update(
-      { completed: true, completedAt: new Date() },
-      { where: { ticketId: ticket.id } }
-    );
-  }
+    if (oldStatus === "closed") {
+      await CheckContactOpenTickets(current.contactId, current.whatsappId, transaction);
+    }
+
+    await current.update({
+      status,
+      queueId,
+      userId,
+      ...(whatsappId ? { whatsappId } : {}),
+      ...(status === "closed" && oldStatus !== "closed"
+        ? { closedAt: new Date() }
+        : status && status !== "closed"
+        ? { closedAt: null }
+        : {})
+    }, { transaction });
+
+    if (current.status === "open" && oldStatus !== "open") {
+      const [card] = await Card.findOrCreate({
+        where: { ticketId: current.id },
+        defaults: {
+          ticketId: current.id,
+          title: ticket.contact.name,
+          position: Math.floor(Date.now() / 1000),
+          completed: false
+        },
+        transaction
+      });
+      if (card.completed) {
+        await card.update({ completed: false, completedAt: null }, { transaction });
+      }
+    } else if (status === "ignored" || (current.status === "closed" && oldStatus !== "closed")) {
+      await Card.update(
+        { completed: true, completedAt: new Date() },
+        {
+          where: {
+            ticketId: current.id,
+            ...(status === "ignored" ? { completed: false } : {})
+          },
+          transaction
+        }
+      );
+    }
+
+    await ticket.reload({ transaction });
+    return { oldStatus, oldUserId };
+  });
 
   const io = getIO();
 

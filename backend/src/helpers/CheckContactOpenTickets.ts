@@ -1,13 +1,15 @@
-import { Op } from "sequelize";
+import { Op, Transaction } from "sequelize";
 import AppError from "../errors/AppError";
 import Ticket from "../models/Ticket";
 
 const CheckContactOpenTickets = async (
   contactId: number,
-  whatsappId: number
+  whatsappId: number,
+  transaction?: Transaction
 ): Promise<void> => {
   const ticket = await Ticket.findOne({
-    where: { contactId, whatsappId, status: { [Op.or]: ["open", "pending"] } }
+    where: { contactId, whatsappId, status: { [Op.or]: ["open", "pending"] } },
+    transaction
   });
 
   if (ticket) {

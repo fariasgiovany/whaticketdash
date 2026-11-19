@@ -30,7 +30,6 @@ const useStyles = makeStyles(theme => ({
 
 	pendingTicket: {
 		cursor: "unset",
-		paddingRight: theme.spacing(12),
 	},
 
 	ticketSelected: {
@@ -96,11 +95,11 @@ const useStyles = makeStyles(theme => ({
 		fontWeight: 500,
 	},
 
-	acceptButton: {
-		position: "absolute",
-		right: theme.spacing(1.5),
-		top: "50%",
-		transform: "translateY(-50%)",
+	ticketActions: {
+		display: "flex",
+		flexShrink: 0,
+		gap: theme.spacing(0.5),
+		marginLeft: theme.spacing(1),
 	},
 
 	ticketQueueColor: {
@@ -129,7 +128,7 @@ const useStyles = makeStyles(theme => ({
 const TicketListItem = ({ ticket }) => {
 	const classes = useStyles();
 	const history = useHistory();
-	const [loading, setLoading] = useState(false);
+	const [pendingAction, setPendingAction] = useState(null);
 	const { ticketId } = useParams();
 	const isMounted = useRef(true);
 	const { user } = useContext(AuthContext);
@@ -140,21 +139,20 @@ const TicketListItem = ({ ticket }) => {
 		};
 	}, []);
 
-	const handleAcepptTicket = async id => {
-		setLoading(true);
+	const handleUpdateStatus = async (event, status) => {
+		event.stopPropagation();
+		setPendingAction(status);
 		try {
-			await api.put(`/tickets/${id}`, {
-				status: "open",
-				userId: user?.id,
+			await api.put(`/tickets/${ticket.id}`, {
+				status,
+				userId: status === "open" ? user?.id : null,
 			});
+			if (status === "open") history.push(`/tickets/${ticket.id}`);
 		} catch (err) {
-			setLoading(false);
 			toastError(err);
+		} finally {
+			if (isMounted.current) setPendingAction(null);
 		}
-		if (isMounted.current) {
-			setLoading(false);
-		}
-		history.push(`/tickets/${id}`);
 	};
 
 	const handleSelectTicket = id => {
@@ -166,7 +164,7 @@ const TicketListItem = ({ ticket }) => {
 			<ListItem
 				dense
 				button
-				onClick={e => {
+				onClick={() => {
 					if (ticket.status === "pending" || ticket.status === "ignored") return;
 					handleSelectTicket(ticket.id);
 				}}
@@ -254,16 +252,28 @@ const TicketListItem = ({ ticket }) => {
 					}
 				/>
 				{(ticket.status === "pending" || ticket.status === "ignored") && (
-					<ButtonWithSpinner
-						color="primary"
-						variant="contained"
-						className={classes.acceptButton}
-						size="small"
-						loading={loading}
-						onClick={e => handleAcepptTicket(ticket.id)}
-					>
-						{i18n.t(ticket.status === "ignored" ? "ticketsList.buttons.attend" : "ticketsList.buttons.accept")}
-					</ButtonWithSpinner>
+					<div className={classes.ticketActions}>
+						{ticket.status === "pending" && (
+							<ButtonWithSpinner
+								size="small"
+								loading={pendingAction === "ignored"}
+								disabled={Boolean(pendingAction)}
+								onClick={event => handleUpdateStatus(event, "ignored")}
+							>
+								{i18n.t("messagesList.header.buttons.ignore")}
+							</ButtonWithSpinner>
+						)}
+						<ButtonWithSpinner
+							color="primary"
+							variant="contained"
+							size="small"
+							loading={pendingAction === "open"}
+							disabled={Boolean(pendingAction)}
+							onClick={event => handleUpdateStatus(event, "open")}
+						>
+							{i18n.t(ticket.status === "ignored" ? "ticketsList.buttons.attend" : "ticketsList.buttons.accept")}
+						</ButtonWithSpinner>
+					</div>
 				)}
 			</ListItem>
 			<Divider variant="inset" component="li" />
