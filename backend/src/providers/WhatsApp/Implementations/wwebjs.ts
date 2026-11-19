@@ -35,6 +35,8 @@ interface Session extends Client {
 }
 
 const sessions: Session[] = [];
+const initializing = new Map<number, Promise<void>>();
+const intentionalLogouts = new Set<number>();
 
 const getWbot = (whatsappId: number): Session => {
   const sessionIndex = sessions.findIndex(s => s.id === whatsappId);
@@ -300,16 +302,20 @@ const syncUnreadMessages = async (wbot: Session) => {
   }
 };
 
-const removeSession = (whatsappId: number): void => {
+const stopSession = async (whatsappId: number): Promise<void> => {
   try {
     const sessionIndex = sessions.findIndex(s => s.id === whatsappId);
     if (sessionIndex !== -1) {
-      sessions[sessionIndex].destroy();
-      sessions.splice(sessionIndex, 1);
+      const [session] = sessions.splice(sessionIndex, 1);
+      await session.destroy();
     }
   } catch (err) {
     logger.error(err);
   }
+};
+
+const removeSession = (whatsappId: number): void => {
+  void stopSession(whatsappId);
 };
 
 const sendMessage = async (
@@ -422,6 +428,7 @@ const getContacts = async (sessionId: number): Promise<ProviderContact[]> => {
 
 const logout = async (sessionId: number): Promise<void> => {
   const wbot = getWbot(sessionId);
+  intentionalLogouts.add(sessionId);
   await wbot.logout();
 };
 
@@ -440,9 +447,10 @@ const deleteMessage = async (
   await message.delete(true);
 };
 
-const init = async (whatsapp: Whatsapp): Promise<void> => {
+const initializeSession = async (whatsapp: Whatsapp): Promise<void> => {
   try {
-    removeSession(whatsapp.id);
+    intentionalLogouts.delete(whatsapp.id);
+    await stopSession(whatsapp.id);
 
     const io = getIO();
     const sessionName = whatsapp.name;
@@ -468,6 +476,8 @@ const init = async (whatsapp: Whatsapp): Promise<void> => {
         ]
       }
     });
+    wbot.id = whatsapp.id;
+    sessions.push(wbot);
 
     wbot.on("qr", async qr => {
       logger.info("Session:", sessionName);
@@ -555,20 +565,29 @@ const init = async (whatsapp: Whatsapp): Promise<void> => {
     wbot.on("disconnected", async reason => {
       logger.info(`Disconnected session: ${sessionName}, reason: ${reason}`);
       try {
-        await whatsapp.update({ status: "OPENING", session: "" });
+        if (sessions.find(session => session.id === whatsapp.id) !== wbot) return;
+        const intentional = intentionalLogouts.has(whatsapp.id);
+        await whatsapp.update({
+          status: intentional ? "DISCONNECTED" : "OPENING",
+          session: "",
+          qrcode: ""
+        });
 
         io.emit("whatsappSession", {
           action: "update",
           session: whatsapp
         });
 
+        await stopSession(whatsapp.id);
+        if (intentional) return;
+
         logger.warn(
           `Session ${sessionName} disconnected. Restarting in 2 seconds...`
         );
-
         await new Promise(r => setTimeout(r, 2000));
-
-        init(whatsapp);
+        const currentInitialization = initializing.get(whatsapp.id);
+        if (currentInitialization) await currentInitialization;
+        void init(whatsapp);
       } catch (err) {
         logger.error(err, "Error on whatsapp disconnected event");
       }
@@ -617,12 +636,24 @@ const init = async (whatsapp: Whatsapp): Promise<void> => {
     await wbot.initialize();
   } catch (err) {
     logger.error(err, "Error on whatsapp session");
+    await stopSession(whatsapp.id);
     await whatsapp.update({ status: "DISCONNECTED", qrcode: "" });
     getIO().emit("whatsappSession", {
       action: "update",
       session: whatsapp
     });
   }
+};
+
+const init = (whatsapp: Whatsapp): Promise<void> => {
+  const current = initializing.get(whatsapp.id);
+  if (current) return current;
+
+  const promise = initializeSession(whatsapp).finally(() => {
+    initializing.delete(whatsapp.id);
+  });
+  initializing.set(whatsapp.id, promise);
+  return promise;
 };
 
 export const WhatsappWebJsProvider: WhatsappProvider = {

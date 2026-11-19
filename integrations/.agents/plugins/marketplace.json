@@ -1,0 +1,12 @@
+{
+  "name": "whaticket-local",
+  "interface": { "displayName": "Whaticket local" },
+  "plugins": [
+    {
+      "name": "whaticket-mcp",
+      "source": { "source": "local", "path": "./whaticket-mcp" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}
