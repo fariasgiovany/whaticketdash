@@ -17,6 +17,7 @@ const selectedId = (value: unknown): number | null => {
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const now = new Date();
+  const todayGmtMinus3 = new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
   const since = new Date(String(req.query.since || ""));
   const until = new Date(String(req.query.until || ""));
   if (
@@ -45,7 +46,7 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     ...(whatsappId ? { whatsappId } : {})
   };
 
-  const [tickets, activeTickets, closedTickets, cards, queues, users, whatsapps] = await Promise.all([
+  const [tickets, activeTickets, closedTickets, cards, dueCards, queues, users, whatsapps] = await Promise.all([
     Ticket.findAll({
       where: { ...commonWhere, createdAt: { [Op.gte]: since, [Op.lt]: until } },
       attributes: ["id", "status", "createdAt", "updatedAt", "closedAt", "unreadMessages"]
@@ -59,6 +60,16 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
       attributes: ["id", "createdAt", "closedAt"]
     }),
     Card.findAll({ attributes: ["id", "title", "ticketId", "completed", "completedAt", "createdAt"] }),
+    Card.findAll({
+      attributes: ["id", "title", "dueDate"],
+      where: {
+        completed: false,
+        dueDate: { [Op.lte]: todayGmtMinus3 },
+        [Op.or]: [{ ticketId: null }, { "$ticket.id$": { [Op.gt]: 0 } }]
+      },
+      include: [{ model: Ticket, as: "ticket", attributes: [], required: false, where: commonWhere }],
+      order: [["dueDate", "ASC"], ["id", "ASC"]]
+    }),
     Queue.findAll({ where: { id: { [Op.in]: allowedQueueIds } }, attributes: ["id", "name"] }),
     User.findAll({
       where: user.profile === "admin" ? undefined : { id: user.id },
@@ -153,6 +164,12 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
       createdAt: ticket.createdAt
     })),
     cards: staleCards.slice(0, 5).map(card => ({ id: card.id, title: card.title, createdAt: card.createdAt })),
+    dueCards: dueCards.map(({ id, title, dueDate }) => ({
+      id,
+      title,
+      dueDate,
+      status: dueDate === todayGmtMinus3 ? "today" : "overdue"
+    })),
     connections: whatsapps
       .filter(whatsapp => !whatsappId || whatsapp.id === whatsappId)
       .map(whatsapp => ({ id: whatsapp.id, name: whatsapp.name, status: whatsapp.status })),

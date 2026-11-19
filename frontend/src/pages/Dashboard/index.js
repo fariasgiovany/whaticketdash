@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import { Button, Chip, CircularProgress, Container, Grid, MenuItem, Paper, TextField, Typography } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import openSocket from "../../services/socket-io";
@@ -16,6 +16,13 @@ const useStyles = makeStyles(theme => ({
   metric: { minHeight: 130, display: "flex", flexDirection: "column", justifyContent: "space-between" },
   metricValue: { fontSize: "2rem", fontWeight: 700, lineHeight: 1.15, color: theme.palette.text.primary },
   sectionTitle: { fontWeight: 700, marginBottom: theme.spacing(1) },
+  deadlines: { marginBottom: theme.spacing(3) },
+  dueList: { maxHeight: 240, overflowY: "auto" },
+  dueRow: {
+    display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.spacing(1),
+    padding: theme.spacing(0.75, 1), color: theme.palette.text.primary, textDecoration: "none",
+    "&:hover": { background: theme.palette.action.hover },
+  },
   row: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.spacing(1), padding: theme.spacing(1.25, 0), borderBottom: theme.border.divider, cursor: "pointer", "&:last-child": { borderBottom: 0 } },
   rowName: { minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
   empty: { padding: theme.spacing(2, 0), color: theme.palette.text.secondary },
@@ -91,6 +98,11 @@ const Dashboard = () => {
   }, []);
 
   const summary = data?.summary || {};
+  const dueCards = data?.dueCards || [];
+  const deadlineGroups = [
+    { status: "overdue", label: "Vencidos", color: "error" },
+    { status: "today", label: "Vencem hoje", color: "primary" }
+  ];
   const metrics = [
     { label: "Em atendimento", value: summary.open, detail: "Tickets abertos agora", target: "/tickets?status=open" },
     { label: "Aguardando", value: summary.pending, detail: "Precisam de atendimento agora", target: "/tickets?status=pending" },
@@ -105,6 +117,23 @@ const Dashboard = () => {
       <div><Typography variant="h4">Visão geral</Typography><Typography color="textSecondary">Atendimento e atividades da Comptabilite</Typography></div>
       <Button variant="outlined" onClick={load} disabled={loading || Boolean(rangeError)}>Atualizar</Button>
     </div>
+    {data && <Paper className={`${classes.panel} ${classes.deadlines}`}>
+      <Typography variant="h6" className={classes.sectionTitle}>Vencimentos de cards (GMT−3)</Typography>
+      <Grid container spacing={2}>
+        {deadlineGroups.map(({ status, label, color }) => {
+          const group = dueCards.filter(card => card.status === status);
+          return <Grid item xs={12} sm={6} key={status}>
+            <Typography variant="subtitle2" color={group.length ? color : "textSecondary"}>{label} ({group.length})</Typography>
+            {group.length > 0 && <div className={classes.dueList}>
+              {group.map(card => <Link key={card.id} to={`/cards?cardId=${card.id}`} className={classes.dueRow}>
+                <span className={classes.rowName}>{card.title}</span>
+                <Chip component="span" size="small" label={card.dueDate.split("-").reverse().join("/")} />
+              </Link>)}
+            </div>}
+          </Grid>;
+        })}
+      </Grid>
+    </Paper>}
     <div className={classes.filters}>
       <TextField className={classes.filter} select size="small" variant="outlined" label="Período" value={period} onChange={event => setPeriod(event.target.value)}>
         <MenuItem value="today">Hoje</MenuItem><MenuItem value="7d">Últimos 7 dias</MenuItem><MenuItem value="30d">Últimos 30 dias</MenuItem><MenuItem value="custom">Personalizado</MenuItem>
