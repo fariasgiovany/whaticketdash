@@ -44,6 +44,9 @@ class Ticket extends Model<Ticket> {
   @UpdatedAt
   updatedAt: Date;
 
+  @Column
+  closedAt: Date;
+
   @ForeignKey(() => User)
   @Column
   userId: number;

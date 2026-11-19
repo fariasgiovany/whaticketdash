@@ -32,6 +32,7 @@ const CreateTicketService = async ({
   const { id }: Ticket = await defaultWhatsapp.$create("ticket", {
     contactId,
     status,
+    closedAt: status === "closed" ? new Date() : null,
     isGroup,
     userId,
     queueId

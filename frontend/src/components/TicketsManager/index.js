@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
+import { useHistory, useLocation } from "react-router-dom";
 import clsx from "clsx";
 import { alpha, makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
@@ -151,9 +152,16 @@ const useStyles = makeStyles((theme) => ({
 
 const TicketsManager = () => {
   const classes = useStyles();
+  const history = useHistory();
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
+  const selectedDate = /^\d{4}-\d{2}-\d{2}$/.test(query.get("date") || "") ? query.get("date") : "";
+  const selectedClosedDate = /^\d{4}-\d{2}-\d{2}$/.test(query.get("closedDate") || "") ? query.get("closedDate") : "";
+  const selectedUnread = query.get("unread") === "1";
+  const selectedStatus = query.get("status");
   const [searchParam, setSearchParam] = useState("");
-  const [tab, setTab] = useState("open");
-  const [tabOpen, setTabOpen] = useState("open");
+  const [tab, setTab] = useState(selectedDate || selectedClosedDate || selectedUnread ? "search" : selectedStatus === "closed" ? "closed" : "open");
+  const [tabOpen, setTabOpen] = useState(selectedStatus === "pending" ? "pending" : "open");
   const [newTicketModalOpen, setNewTicketModalOpen] = useState(false);
   const [showAllTickets, setShowAllTickets] = useState(false);
   const searchInputRef = useRef();
@@ -186,7 +194,7 @@ const TicketsManager = () => {
 
     if (searchedTerm === "") {
       setSearchParam(searchedTerm);
-      setTab("open");
+      if (!selectedDate && !selectedClosedDate && !selectedUnread) setTab("open");
       return;
     }
 
@@ -264,6 +272,8 @@ const TicketsManager = () => {
         </Tabs>
       </Paper>
       <Paper square elevation={0} className={classes.ticketOptionsBox}>
+        {(selectedDate || selectedClosedDate) && <Chip size="small" label={`${selectedClosedDate ? "Concluídos" : "Criados"} em ${(selectedDate || selectedClosedDate).split("-").reverse().join("/")}`} onDelete={() => history.replace("/tickets")} />}
+        {selectedUnread && <Chip size="small" label="Não lidos" onDelete={() => history.replace("/tickets")} />}
         {tab === "search" ? (
           <div className={classes.serachInputWrapper}>
             <SearchIcon className={classes.searchIcon} />
@@ -377,6 +387,9 @@ const TicketsManager = () => {
       <TabPanel value={tab} name="search" className={classes.ticketsWrapper}>
         <TicketsList
           searchParam={searchParam}
+          date={selectedDate}
+          closedDate={selectedClosedDate}
+          withUnreadMessages={selectedUnread ? "true" : undefined}
           showAll={true}
           selectedQueueIds={selectedQueueIds}
         />

@@ -1,95 +1,26 @@
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
+import { useHistory } from "react-router-dom";
 import { useTheme } from "@material-ui/core/styles";
-import {
-	BarChart,
-	CartesianGrid,
-	Bar,
-	XAxis,
-	YAxis,
-	Label,
-	ResponsiveContainer,
-} from "recharts";
-import { startOfHour, parseISO, format } from "date-fns";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import { i18n } from "../../translate/i18n";
+const Chart = ({ data }) => {
+  const theme = useTheme();
+  const history = useHistory();
+  const openDay = (point, field) => {
+    if (point?.day) history.push(`/tickets?${field === "closed" ? "closedDate" : "date"}=${point.day}`);
+  };
 
-import Title from "./Title";
-import useTickets from "../../hooks/useTickets";
-
-const Chart = () => {
-	const theme = useTheme();
-
-	const date = useRef(new Date().toISOString());
-	const { tickets } = useTickets({ date: date.current });
-
-	const [chartData, setChartData] = useState([
-		{ time: "08:00", amount: 0 },
-		{ time: "09:00", amount: 0 },
-		{ time: "10:00", amount: 0 },
-		{ time: "11:00", amount: 0 },
-		{ time: "12:00", amount: 0 },
-		{ time: "13:00", amount: 0 },
-		{ time: "14:00", amount: 0 },
-		{ time: "15:00", amount: 0 },
-		{ time: "16:00", amount: 0 },
-		{ time: "17:00", amount: 0 },
-		{ time: "18:00", amount: 0 },
-		{ time: "19:00", amount: 0 },
-	]);
-
-	useEffect(() => {
-		setChartData(prevState => {
-			let aux = [...prevState];
-
-			aux.forEach(a => {
-				tickets.forEach(ticket => {
-					format(startOfHour(parseISO(ticket.createdAt)), "HH:mm") === a.time &&
-						a.amount++;
-				});
-			});
-
-			return aux;
-		});
-	}, [tickets]);
-
-	return (
-		<React.Fragment>
-			<Title>{`${i18n.t("dashboard.charts.perDay.title")}${
-				tickets.length
-			}`}</Title>
-			<ResponsiveContainer>
-				<BarChart
-					data={chartData}
-					barSize={40}
-					width={730}
-					height={250}
-					margin={{
-						top: 16,
-						right: 16,
-						bottom: 0,
-						left: 24,
-					}}
-				>
-					<CartesianGrid strokeDasharray="3 3" />
-					<XAxis dataKey="time" stroke={theme.palette.text.secondary} />
-					<YAxis
-						type="number"
-						allowDecimals={false}
-						stroke={theme.palette.text.secondary}
-					>
-						<Label
-							angle={270}
-							position="left"
-							style={{ textAnchor: "middle", fill: theme.palette.text.primary }}
-						>
-							Tickets
-						</Label>
-					</YAxis>
-					<Bar dataKey="amount" fill={theme.palette.primary.main} />
-				</BarChart>
-			</ResponsiveContainer>
-		</React.Fragment>
-	);
+  return <ResponsiveContainer width="100%" height={280}>
+    <BarChart data={data} margin={{ top: 12, right: 8, bottom: 0, left: -20 }}>
+      <CartesianGrid stroke={theme.palette.divider} strokeDasharray="3 3" vertical={false} />
+      <XAxis dataKey="day" tickFormatter={value => value.slice(5).split("-").reverse().join("/")} stroke={theme.palette.text.secondary} />
+      <YAxis allowDecimals={false} stroke={theme.palette.text.secondary} />
+      <Tooltip contentStyle={{ background: theme.palette.background.paper, borderColor: theme.palette.divider, color: theme.palette.text.primary }} />
+      <Legend />
+      <Bar dataKey="created" name="Criados" fill={theme.palette.secondary.main} radius={[4, 4, 0, 0]} onClick={point => openDay(point.payload, "created")} cursor="pointer" />
+      <Bar dataKey="closed" name="Concluídos" fill={theme.palette.primary.main} radius={[4, 4, 0, 0]} onClick={point => openDay(point.payload, "closed")} cursor="pointer" />
+    </BarChart>
+  </ResponsiveContainer>;
 };
 
 export default Chart;

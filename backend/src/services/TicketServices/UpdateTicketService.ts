@@ -48,7 +48,12 @@ const UpdateTicketService = async ({
   await ticket.update({
     status,
     queueId,
-    userId
+    userId,
+    ...(status === "closed" && oldStatus !== "closed"
+      ? { closedAt: new Date() }
+      : status && status !== "closed"
+      ? { closedAt: null }
+      : {})
   });
 
   if (whatsappId) {
