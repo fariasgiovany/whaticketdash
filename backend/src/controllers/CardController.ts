@@ -14,6 +14,15 @@ const cardInclude = [
   { model: CardComment, as: "comments", include: [{ model: User, as: "user", attributes: ["id", "name"] }] }
 ];
 
+const parseDueDate = (value: unknown): string | null => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string" && /^[1-9]\d{3}-\d{2}-\d{2}$/.test(value)) {
+    const date = new Date(`${value}T00:00:00Z`);
+    if (!Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value) return value;
+  }
+  throw new AppError("Informe uma data de vencimento válida", 400);
+};
+
 export const index = async (_req: Request, res: Response): Promise<Response> => {
   const [lists, cards] = await Promise.all([
     CardList.findAll({ order: [["position", "ASC"], ["id", "ASC"]] }),
@@ -53,14 +62,22 @@ export const createCard = async (req: Request, res: Response): Promise<Response>
   if (!title) throw new AppError("Informe o título do card");
   const listId = req.body.listId == null ? null : Number(req.body.listId);
   if (listId && !(await CardList.findByPk(listId))) throw new AppError("Lista não encontrada", 404);
-  const card = await Card.create({ title, tag: String(req.body.tag || "").trim() || null, listId, position: Math.floor(Date.now() / 1000), completed: false });
+  const card = await Card.create({
+    title,
+    tag: String(req.body.tag || "").trim() || null,
+    listId,
+    position: Math.floor(Date.now() / 1000),
+    completed: false,
+    dueDate: parseDueDate(req.body.dueDate)
+  });
   return res.status(201).json(card);
 };
 
 export const updateCard = async (req: Request, res: Response): Promise<Response> => {
   const card = await Card.findByPk(req.params.cardId);
   if (!card) throw new AppError("Card não encontrado", 404);
-  const changes: { title?: string; tag?: string | null; listId?: number | null; completed?: boolean; completedAt?: Date | null; position?: number } = {};
+  const changes: { title?: string; tag?: string | null; listId?: number | null; completed?: boolean; completedAt?: Date | null; position?: number; dueDate?: string | null } = {};
+  if (req.body.dueDate !== undefined) changes.dueDate = parseDueDate(req.body.dueDate);
   if (req.body.title !== undefined) {
     changes.title = String(req.body.title).trim();
     if (!changes.title) throw new AppError("Informe o título do card");

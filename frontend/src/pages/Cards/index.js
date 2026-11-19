@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Tab, Tabs, TextField, Tooltip, Typography } from "@material-ui/core";
 import { Add, ChatBubbleOutline, CheckCircleOutline, DeleteOutline, OpenInNew, Replay } from "@material-ui/icons";
 import { makeStyles } from "@material-ui/core/styles";
@@ -20,14 +20,19 @@ const useStyles = makeStyles(theme => ({
   comment: { padding: 10, background: theme.palette.action.hover, borderRadius: 8 },
 }));
 
+const dueDateLimits = { min: "1000-01-01", max: "9999-12-31" };
+
 const Cards = () => {
   const classes = useStyles();
   const history = useHistory();
+  const { search } = useLocation();
+  const cardId = new URLSearchParams(search).get("cardId");
   const [lists, setLists] = useState([]);
   const [cards, setCards] = useState([]);
   const [tab, setTab] = useState(0);
   const [selected, setSelected] = useState(null);
   const [newTitle, setNewTitle] = useState("");
+  const [dueDateDraft, setDueDateDraft] = useState(null);
   const [newListName, setNewListName] = useState("");
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
@@ -38,11 +43,17 @@ const Cards = () => {
       const { data } = await api.get("/cards");
       setLists(data.lists);
       setCards(data.cards);
-      setSelected(current => current ? data.cards.find(card => card.id === current.id) || null : null);
+      setSelected(current => current && !current.new
+        ? data.cards.find(card => card.id === current.id) || null
+        : current);
     } catch (err) { toastError(err); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const card = cards.find(item => String(item.id) === cardId);
+    if (card) setSelected(current => current || card);
+  }, [cardId, cards]);
   useEffect(() => {
     const timer = setInterval(load, 15000);
     return () => clearInterval(timer);
@@ -54,10 +65,15 @@ const Cards = () => {
     finally { setBusy(false); }
   };
 
-  const createCard = listId => {
+  const createCard = event => {
+    event.preventDefault();
     const title = newTitle.trim();
-    if (!title) return;
-    run(async () => { await api.post("/cards", { title, listId }); setNewTitle(""); setSelected(null); });
+    if (!title || busy) return;
+    run(async () => {
+      await api.post("/cards", { title, listId: selected.listId, dueDate: dueDateDraft || null });
+      setNewTitle("");
+      closeCard();
+    });
   };
   const createList = () => {
     const name = newListName.trim();
@@ -69,6 +85,24 @@ const Cards = () => {
     run(async () => { await api.delete(`/card-lists/${listToDelete.id}`); setListToDelete(null); });
   };
   const updateCard = changes => run(() => api.put(`/cards/${selected.id}`, changes));
+  const closeCard = () => {
+    if (cardId) {
+      const params = new URLSearchParams(search);
+      params.delete("cardId");
+      history.replace({ search: params.toString() });
+    }
+    setSelected(null);
+    setDueDateDraft(null);
+  };
+  const saveDueDate = event => {
+    event.preventDefault();
+    if (busy || dueDateDraft === null) return;
+    run(async () => {
+      const { data } = await api.put(`/cards/${selected.id}`, { dueDate: dueDateDraft || null });
+      setSelected(current => current?.id === data.id ? { ...current, dueDate: data.dueDate } : current);
+      setDueDateDraft(null);
+    });
+  };
   const addComment = () => {
     const body = comment.trim();
     if (!body) return;
@@ -108,6 +142,7 @@ const Cards = () => {
           {cards.filter(card => (card.listId || null) === column.id && card.completed === Boolean(tab)).map(card => <Paper key={card.id} className={classes.card} draggable onDragStart={e => e.dataTransfer.setData("text/plain", String(card.id))} onClick={() => setSelected(card)}>
             {card.tag && <Chip size="small" color="primary" label={card.tag} style={{ marginBottom: 8 }} />}
             <Typography variant="body2"><strong>{card.title}</strong></Typography>
+            {card.dueDate && <Typography variant="caption" color="textSecondary">Vencimento {card.dueDate.split("-").reverse().join("/")}</Typography>}
             <div className={classes.cardFooter}>
               <Typography variant="caption" color="textSecondary">{card.ticketId ? `Ticket #${card.ticketId}` : "Card livre"}</Typography>
               <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -132,14 +167,19 @@ const Cards = () => {
         {tab === 0 && <Button size="small" startIcon={<Add />} onClick={() => { setSelected({ new: true, listId: column.id }); setNewTitle(""); }}>Adicionar card</Button>}
       </div>)}
     </div>
-    <Dialog open={Boolean(selected)} onClose={() => setSelected(null)} maxWidth="sm" fullWidth>
+    <Dialog open={Boolean(selected)} onClose={busy ? undefined : closeCard} maxWidth="sm" fullWidth>
       <DialogTitle>{selected?.new ? "Novo card" : selected?.title}</DialogTitle>
       <DialogContent>
-        {selected?.new ? <div className={classes.dialogFields}>
-          <TextField autoFocus label="Título" value={newTitle} onChange={e => setNewTitle(e.target.value)} onKeyDown={e => e.key === "Enter" && createCard(selected.listId)} />
-        </div> : selected && <div className={classes.dialogFields}>
+        {selected?.new ? <form id="create-card-form" onSubmit={createCard} className={classes.dialogFields}>
+          <TextField autoFocus label="Título" value={newTitle} onChange={e => setNewTitle(e.target.value)} />
+          <TextField id="card-due-date" label="Data de vencimento" type="date" value={dueDateDraft ?? ""} onChange={e => setDueDateDraft(e.target.value)} InputLabelProps={{ shrink: true }} inputProps={dueDateLimits} disabled={busy} />
+        </form> : selected && <div className={classes.dialogFields}>
           <TextField label="Título" value={selected.title} onChange={e => setSelected({ ...selected, title: e.target.value })} onBlur={() => { const original = cards.find(card => card.id === selected.id); if (selected.title.trim() && selected.title !== original?.title) updateCard({ title: selected.title }); }} />
           <TextField label="Tag de identificação" value={selected.tag || ""} onChange={e => setSelected({ ...selected, tag: e.target.value })} onBlur={() => { const original = cards.find(card => card.id === selected.id); if (selected.tag !== original?.tag) updateCard({ tag: selected.tag }); }} />
+          <form onSubmit={saveDueDate} style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <TextField id="card-due-date" label="Data de vencimento" type="date" value={dueDateDraft ?? selected.dueDate ?? ""} onChange={e => setDueDateDraft(e.target.value)} InputLabelProps={{ shrink: true }} inputProps={dueDateLimits} disabled={busy} />
+            <Button type="submit" color="primary" disabled={busy || dueDateDraft === null || dueDateDraft === (selected.dueDate ?? "")}>Salvar vencimento</Button>
+          </form>
           {selected.ticketId && <Button startIcon={<OpenInNew />} onClick={() => history.push(`/tickets/${selected.ticketId}`)}>Abrir ticket #{selected.ticketId}</Button>}
           <Button startIcon={<CheckCircleOutline />} variant="outlined" onClick={() => updateCard({ completed: !selected.completed })}>{selected.completed ? "Reabrir card" : "Concluir card"}</Button>
           <Typography variant="subtitle1">Comentários</Typography>
@@ -149,8 +189,8 @@ const Cards = () => {
         </div>}
       </DialogContent>
       <DialogActions>
-        <Button onClick={() => setSelected(null)}>Fechar</Button>
-        {selected?.new && <Button color="primary" variant="contained" onClick={() => createCard(selected.listId)} disabled={busy || !newTitle.trim()}>Criar</Button>}
+        <Button onClick={closeCard} disabled={busy}>Fechar</Button>
+        {selected?.new && <Button type="submit" form="create-card-form" color="primary" variant="contained" disabled={busy || !newTitle.trim()}>Criar</Button>}
       </DialogActions>
     </Dialog>
     <Dialog open={Boolean(listToDelete)} onClose={() => setListToDelete(null)}>
