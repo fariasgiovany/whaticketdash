@@ -7,7 +7,7 @@ import ShowTicketService from "./ShowTicketService";
 const FindOrCreateTicketService = async (
   contact: Contact,
   whatsappId: number,
-  unreadMessages: number,
+  unreadMessages?: number,
   groupContact?: Contact
 ): Promise<Ticket> => {
   let ticket = await Ticket.findOne({
@@ -20,7 +20,7 @@ const FindOrCreateTicketService = async (
     }
   });
 
-  if (ticket) {
+  if (ticket && unreadMessages !== undefined) {
     await ticket.update({ unreadMessages });
   }
 
@@ -70,7 +70,7 @@ const FindOrCreateTicketService = async (
       contactId: groupContact ? groupContact.id : contact.id,
       status: "pending",
       isGroup: !!groupContact,
-      unreadMessages,
+      unreadMessages: unreadMessages ?? 0,
       whatsappId
     });
   }

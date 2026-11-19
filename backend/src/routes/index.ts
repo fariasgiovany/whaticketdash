@@ -13,6 +13,7 @@ import quickAnswerRoutes from "./quickAnswerRoutes";
 import apiRoutes from "./apiRoutes";
 import cardRoutes from "./cardRoutes";
 import dashboardRoutes from "./dashboardRoutes";
+import scheduledMessageRoutes from "./scheduledMessageRoutes";
 
 const routes = Router();
 
@@ -28,6 +29,7 @@ routes.use(queueRoutes);
 routes.use(quickAnswerRoutes);
 routes.use(cardRoutes);
 routes.use(dashboardRoutes);
+routes.use(scheduledMessageRoutes);
 routes.use("/api/messages", apiRoutes);
 
 export default routes;
