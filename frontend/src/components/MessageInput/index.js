@@ -117,7 +117,7 @@ const useStyles = makeStyles(theme => ({
     position: "absolute",
     bottom: 63,
     width: 40,
-    borderTop: "1px solid #e8e8e8",
+    borderTop: theme.border.divider,
   },
 
   circleLoading: {
@@ -167,7 +167,7 @@ const useStyles = makeStyles(theme => ({
     flex: 1,
     marginRight: 5,
     overflowY: "hidden",
-    backgroundColor: "rgba(0, 0, 0, 0.05)",
+    backgroundColor: theme.palette.action.selected,
     borderRadius: "7.5px",
     display: "flex",
     position: "relative",
@@ -184,18 +184,18 @@ const useStyles = makeStyles(theme => ({
   replyginContactMsgSideColor: {
     flex: "none",
     width: "4px",
-    backgroundColor: "#35cd96",
+    backgroundColor: theme.palette.success.main,
   },
 
   replyginSelfMsgSideColor: {
     flex: "none",
     width: "4px",
-    backgroundColor: "#6bcbef",
+    backgroundColor: theme.palette.secondary.main,
   },
 
   messageContactName: {
     display: "flex",
-    color: "#6bcbef",
+    color: theme.palette.secondary.main,
     fontWeight: 500,
   },
   messageQuickAnswersWrapper: {

@@ -29,10 +29,10 @@ const useStyles = makeStyles(theme => ({
 	},
 
 	ticketsListHeader: {
-		color: "rgb(67, 83, 105)",
+		color: theme.palette.text.primary,
 		zIndex: 2,
 		backgroundColor: "white",
-		borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+		borderBottom: theme.border.divider,
 		display: "flex",
 		alignItems: "center",
 		justifyContent: "space-between",
@@ -40,7 +40,7 @@ const useStyles = makeStyles(theme => ({
 
 	ticketsCount: {
 		fontWeight: "normal",
-		color: "rgb(104, 121, 146)",
+		color: theme.palette.text.secondary,
 		marginLeft: "8px",
 		fontSize: "14px",
 	},

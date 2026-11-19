@@ -7,6 +7,7 @@ import {
   Toolbar,
   List,
   IconButton,
+  Typography,
   useMediaQuery,
 } from "@material-ui/core";
 import MenuIcon from "@material-ui/icons/Menu";
@@ -21,7 +22,6 @@ import { AuthContext } from "../context/Auth/AuthContext";
 import BackdropLoading from "../components/BackdropLoading";
 import { i18n } from "../translate/i18n";
 import { useThemeContext } from "../context/DarkMode";
-import logo from "../assets/whaticket-logo-white.png";
 
 const drawerWidth = 280;
 const drawerCollapsedWidth = 92;
@@ -37,6 +37,9 @@ const useStyles = makeStyles((theme) => ({
   toolbar: {
     minHeight: theme.sizing.appBar,
     paddingRight: 24, // keep right padding when drawer closed
+    [theme.breakpoints.down("xs")]: {
+      paddingRight: 8,
+    },
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
@@ -45,9 +48,17 @@ const useStyles = makeStyles((theme) => ({
   menuButton: {
     marginRight: 36,
     color: theme.palette.common.white,
+    [theme.breakpoints.down("xs")]: {
+      marginRight: 8,
+    },
   },
-  logo: {
-    height: 30,
+  brandTitle: {
+    color: theme.palette.common.white,
+    fontWeight: 700,
+    letterSpacing: "-0.02em",
+    [theme.breakpoints.down("xs")]: {
+      fontSize: "0.85rem",
+    },
   },
   grow: {
     flexGrow: 1,
@@ -175,7 +186,9 @@ const LoggedInLayout = ({ children }) => {
           >
             {drawerOpen ? <MenuOpenIcon /> : <MenuIcon />}
           </IconButton>
-          <img src={logo} alt="Whaticket" className={classes.logo} />
+          <Typography variant="h6" component="span" className={classes.brandTitle}>
+            Whaticket Comptabilite
+          </Typography>
           <div className={classes.grow} />
 
           <IconButton

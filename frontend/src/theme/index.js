@@ -4,9 +4,9 @@ import palette from "./palette";
 
 const borderRadius = {
   small: "8px",
-  medium: "16px",
-  input: "10px",
-  table: "12px",
+  medium: "12px",
+  input: "8px",
+  table: "10px",
   pill: "999px",
 };
 
@@ -25,6 +25,10 @@ const createAppTheme = (type) => {
     },
 
     typography: {
+      fontFamily: 'Arial, Helvetica, sans-serif',
+      h4: { fontWeight: 700, letterSpacing: "-0.03em" },
+      h5: { fontWeight: 700, letterSpacing: "-0.02em" },
+      h6: { fontWeight: 700 },
       sectionLabel: {
         fontSize: "12px",
         fontWeight: 700,
@@ -63,8 +67,9 @@ const createAppTheme = (type) => {
     overrides: {
       MuiButton: {
         root: {
-          borderRadius: 32,
+          borderRadius: 8,
           fontSize: "13px",
+          fontWeight: 700,
           textTransform: "none",
         },
         outlined: {
@@ -86,6 +91,12 @@ const createAppTheme = (type) => {
         root: {
           color: colors.primary.main,
         },
+      },
+      MuiAppBar: {
+        colorDefault: { backgroundColor: colors.appBar.background },
+      },
+      MuiTabs: {
+        indicator: { height: 3, borderRadius: 3 },
       },
       MuiPaper: {
         outlined: {

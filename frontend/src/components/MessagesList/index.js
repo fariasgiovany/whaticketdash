@@ -103,7 +103,7 @@ const useStyles = makeStyles((theme) => ({
   quotedContainerLeft: {
     margin: "-3px -80px 6px -6px",
     overflow: "hidden",
-    backgroundColor: "#f0f0f0",
+    backgroundColor: theme.palette.action.selected,
     borderRadius: "7.5px",
     display: "flex",
     position: "relative",
@@ -121,7 +121,7 @@ const useStyles = makeStyles((theme) => ({
   quotedSideColorLeft: {
     flex: "none",
     width: "4px",
-    backgroundColor: "#6bcbef",
+    backgroundColor: theme.palette.secondary.main,
   },
 
   messageRight: {
@@ -160,7 +160,7 @@ const useStyles = makeStyles((theme) => ({
   quotedContainerRight: {
     margin: "-3px -80px 6px -6px",
     overflowY: "hidden",
-    backgroundColor: "#cfe9ba",
+    backgroundColor: theme.palette.action.selected,
     borderRadius: "7.5px",
     display: "flex",
     position: "relative",
@@ -176,13 +176,13 @@ const useStyles = makeStyles((theme) => ({
   quotedSideColorRight: {
     flex: "none",
     width: "4px",
-    backgroundColor: "#35cd96",
+    backgroundColor: theme.palette.success.main,
   },
 
   messageActionsButton: {
     display: "none",
     position: "relative",
-    color: "#999",
+    color: theme.palette.text.secondary,
     zIndex: 1,
     backgroundColor: "inherit",
     opacity: "90%",
@@ -191,7 +191,7 @@ const useStyles = makeStyles((theme) => ({
 
   messageContactName: {
     display: "flex",
-    color: "#6bcbef",
+    color: theme.palette.secondary.main,
     fontWeight: 500,
   },
 
@@ -202,7 +202,7 @@ const useStyles = makeStyles((theme) => ({
 
   textContentItemDeleted: {
     fontStyle: "italic",
-    color: "rgba(0, 0, 0, 0.36)",
+    color: theme.palette.text.secondary,
     overflowWrap: "break-word",
     padding: "3px 80px 6px 6px",
   },

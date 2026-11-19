@@ -54,10 +54,10 @@ const useStyles = makeStyles(theme => ({
 		justifyContent: "center",
 	},
 	tooltip: {
-		backgroundColor: "#f5f5f9",
-		color: "rgba(0, 0, 0, 0.87)",
+		backgroundColor: theme.palette.background.paper,
+		color: theme.palette.text.primary,
 		fontSize: theme.typography.pxToRem(14),
-		border: "1px solid #dadde9",
+		border: theme.border.divider,
 		maxWidth: 450,
 	},
 	tooltipPopper: {
