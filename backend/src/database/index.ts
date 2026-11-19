@@ -13,6 +13,8 @@ import QuickAnswer from "../models/QuickAnswer";
 import Card from "../models/Card";
 import CardList from "../models/CardList";
 import CardComment from "../models/CardComment";
+import ScheduledMessage from "../models/ScheduledMessage";
+import ScheduledMessageQueue from "../models/ScheduledMessageQueue";
 
 // eslint-disable-next-line
 const dbConfig = require("../config/database");
@@ -34,7 +36,9 @@ const models = [
   QuickAnswer,
   CardList,
   Card,
-  CardComment
+  CardComment,
+  ScheduledMessage,
+  ScheduledMessageQueue
 ];
 
 sequelize.addModels(models);

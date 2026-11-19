@@ -6,7 +6,7 @@ import { whatsappProvider, ProviderMessage } from "../../providers/WhatsApp";
 import formatBody from "../../helpers/Mustache";
 
 interface Request {
-  media: Express.Multer.File;
+  media: Express.Multer.File | { filename: string; mimetype: string; data: Buffer };
   ticket: Ticket;
   body?: string;
 }
@@ -30,7 +30,7 @@ const SendWhatsAppMedia = async ({
     const mediaInput = {
       filename: media.filename,
       mimetype: media.mimetype,
-      path: media.path
+      ...("path" in media ? { path: media.path } : { data: media.data })
     };
 
     const mediaOptions = {
@@ -50,7 +50,7 @@ const SendWhatsAppMedia = async ({
 
     await ticket.update({ lastMessage: body || media.filename });
 
-    fs.unlinkSync(media.path);
+    if ("path" in media) fs.unlinkSync(media.path);
 
     return sentMessage;
   } catch (err) {
