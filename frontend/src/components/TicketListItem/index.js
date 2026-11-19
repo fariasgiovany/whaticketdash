@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useContext } from "react";
 
 import { useHistory, useParams } from "react-router-dom";
 import { parseISO, format, isSameDay } from "date-fns";
-import clsx from "clsx";
 
 import { alpha, makeStyles } from "@material-ui/core/styles";
 import { green } from "@material-ui/core/colors";
@@ -26,10 +25,6 @@ import toastError from "../../errors/toastError";
 const useStyles = makeStyles(theme => ({
 	ticket: {
 		position: "relative",
-	},
-
-	pendingTicket: {
-		cursor: "unset",
 	},
 
 	ticketSelected: {
@@ -155,8 +150,10 @@ const TicketListItem = ({ ticket }) => {
 		}
 	};
 
-	const handleSelectTicket = id => {
-		history.push(`/tickets/${id}`);
+	const handleSelectTicket = () => {
+		if (ticket.status === "ignored") return;
+		const search = ticket.status === "pending" ? "?status=pending" : "";
+		history.push(`/tickets/${ticket.id}${search}`);
 	};
 
 	return (
@@ -164,15 +161,10 @@ const TicketListItem = ({ ticket }) => {
 			<ListItem
 				dense
 				button
-				onClick={() => {
-					if (ticket.status === "pending" || ticket.status === "ignored") return;
-					handleSelectTicket(ticket.id);
-				}}
+				onClick={handleSelectTicket}
 				selected={ticketId && +ticketId === ticket.id}
 				classes={{ selected: classes.ticketSelected }}
-				className={clsx(classes.ticket, {
-					[classes.pendingTicket]: ticket.status === "pending",
-				})}
+				className={classes.ticket}
 			>
 				<Tooltip
 					arrow

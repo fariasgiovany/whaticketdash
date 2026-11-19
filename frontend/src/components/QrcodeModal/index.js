@@ -53,7 +53,8 @@ const QrcodeModal = ({ open, onClose, whatsAppId }) => {
 						{i18n.t("qrCode.message")}
 					</Typography>
 					{qrCode ? (
-						<QRCode value={qrCode} size={256} />
+						<QRCode value={qrCode} size={280} bgColor="#FFFFFF" fgColor="#000000" includeMargin
+							style={{ display: "block", maxWidth: "100%", height: "auto", margin: "0 auto" }} />
 					) : (
 						<span>Waiting for QR Code</span>
 					)}
