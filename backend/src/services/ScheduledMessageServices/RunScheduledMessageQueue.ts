@@ -77,8 +77,6 @@ const send = async (message: ScheduledMessage): Promise<void> => {
     const ticket = await resolveTicket(message);
     if (!ticket || !ticket.whatsappId || !ticket.contact.number) {
       errorMessage = "Contato ou conexão indisponível para envio.";
-    } else if (ticket.status === "ignored") {
-      errorMessage = "A conversa está em Ignorados. Reabra o atendimento antes de reagendar.";
     } else if (message.attachmentName) {
       if (!message.attachment) throw new Error("Scheduled attachment is missing");
       await SendWhatsAppMedia({

@@ -17,7 +17,8 @@ const FindOrCreateTicketService = async (
       },
       contactId: groupContact ? groupContact.id : contact.id,
       whatsappId: whatsappId
-    }
+    },
+    order: [["status", "DESC"], ["updatedAt", "DESC"]]
   });
 
   if (ticket && unreadMessages !== undefined) {

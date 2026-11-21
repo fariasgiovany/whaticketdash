@@ -55,6 +55,7 @@ const UpdateTicketService = async ({
       status,
       queueId,
       userId,
+      ignoredAt: status ? (status === "ignored" ? new Date() : null) : undefined,
       ...(whatsappId ? { whatsappId } : {}),
       ...(status === "closed" && oldStatus !== "closed"
         ? { closedAt: new Date() }

@@ -9,6 +9,7 @@ import {
   BelongsTo,
   HasMany,
   AutoIncrement,
+  DataType,
   Default
 } from "sequelize-typescript";
 
@@ -46,6 +47,9 @@ class Ticket extends Model<Ticket> {
 
   @Column
   closedAt: Date;
+
+  @Column(DataType.DATE)
+  ignoredAt: Date | null;
 
   @ForeignKey(() => User)
   @Column

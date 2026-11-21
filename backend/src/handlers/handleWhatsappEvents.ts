@@ -244,17 +244,25 @@ export const handleMessage = async (
 
     const whatsapp = await ShowWhatsAppService(contextPayload.whatsappId);
     if (
-      contextPayload.unreadMessages === 0 &&
+      processedMessage.fromMe &&
       whatsapp.farewellMessage &&
       formatBody(whatsapp.farewellMessage, contact) === processedMessage.body
     ) {
-      return;
+      const ignoredTicket = await Ticket.findOne({
+        where: {
+          contactId: (groupContact || contact).id,
+          whatsappId: contextPayload.whatsappId,
+          status: "ignored"
+        },
+        attributes: ["id"]
+      });
+      if (!ignoredTicket) return;
     }
 
     const ticket = await FindOrCreateTicketService(
       contact,
       contextPayload.whatsappId,
-      contextPayload.unreadMessages,
+      undefined,
       groupContact
     );
 
@@ -287,23 +295,27 @@ export const handleMessage = async (
       lastMessageText = processedMessage.body || mediaPayload?.filename || "";
     }
 
-    await ticket.update({ lastMessage: lastMessageText });
-
-    await CreateMessageService({ messageData });
+    const { ticket: currentTicket } = await CreateMessageService({
+      messageData,
+      timestamp: processedMessage.timestamp,
+      lastMessage: lastMessageText,
+      unreadMessages: contextPayload.unreadMessages
+    });
 
     await processVcardMessage(processedMessage);
 
     if (
-      !ticket.queue &&
+      currentTicket.status !== "ignored" &&
+      !currentTicket.queueId &&
       !contextPayload.groupContact &&
       !processedMessage.fromMe &&
-      !ticket.userId &&
+      !currentTicket.userId &&
       whatsapp.queues.length >= 1
     ) {
       await handleQueueLogic(
         contextPayload.whatsappId,
         processedMessage.body,
-        ticket,
+        currentTicket,
         contactPayload
       );
     }
