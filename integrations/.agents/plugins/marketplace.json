@@ -3,6 +3,12 @@
   "interface": { "displayName": "Whaticket local" },
   "plugins": [
     {
+      "name": "whats",
+      "source": { "source": "local", "path": "./whats" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    },
+    {
       "name": "whaticket-mcp",
       "source": { "source": "local", "path": "./whaticket-mcp" },
       "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },

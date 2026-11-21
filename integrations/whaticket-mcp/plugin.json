@@ -1,15 +1,15 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "whaticket-mcp",
-  "version": "0.1.0",
-  "description": "Consulta e edita tickets e cards do Whaticket por um cliente local na rede Headscale.",
+  "version": "0.2.0",
+  "description": "Consulta tickets, gerencia cards e agenda mensagens no Whaticket pela rede Headscale.",
   "author": { "name": "WhaticketDash" },
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "Whaticket",
-        "shortDescription": "Tickets e cards locais",
-        "longDescription": "Consulta e atualiza tickets e cards do Whaticket por conexão local à rede Headscale.",
+        "shortDescription": "Tickets, cards e agendamentos",
+        "longDescription": "Consulta e atualiza tickets e cards e agenda mensagens no Whaticket por conexão local à rede Headscale.",
         "developerName": "WhaticketDash",
         "category": "Productivity",
         "capabilities": ["Interactive"],

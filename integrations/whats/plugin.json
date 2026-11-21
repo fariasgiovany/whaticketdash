@@ -1,0 +1,17 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "whats",
+  "version": "0.1.0",
+  "description": "Atalho para o MCP local do Whaticket.",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Whats",
+        "shortDescription": "Acesse o Whaticket pelo MCP local",
+        "longDescription": "Consulte tickets e cards ou agende mensagens usando o MCP local do Whaticket já configurado no Codex.",
+        "category": "Productivity",
+        "defaultPrompt": "Liste meus tickets abertos no Whaticket."
+      }
+    }
+  }
+}
